@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the AWS Athena MCP Server! This d
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - AWS CLI configured with appropriate permissions
 - Git
 
@@ -54,7 +54,7 @@ python -m mypy src/athena_mcp --ignore-missing-imports
 
 - All new features must include tests
 - Maintain minimum 80% test coverage
-- Tests must pass on Python 3.9, 3.10, 3.11, and 3.12
+- Tests must pass on Python 3.10, 3.11, and 3.12
 - Use pytest for all tests
 
 ## 📝 Code Standards

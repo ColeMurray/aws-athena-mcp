@@ -16,14 +16,13 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Database",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "fastmcp>=2.0.0,<3.0.0",
     "boto3>=1.34.0,<2.0.0",
@@ -57,7 +56,7 @@ where = ["src"]
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -83,7 +82,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 - Built on FastMCP framework for MCP protocol compliance
 - Uses boto3 for AWS Athena integration
-- Supports Python 3.9+ with full type hints
+- Supports Python 3.10+ with full type hints
 - Modular architecture with clean separation of concerns
 - Comprehensive input validation and error handling
 
