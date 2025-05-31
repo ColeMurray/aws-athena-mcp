@@ -1,0 +1,31 @@
+# AWS Athena MCP Server Environment Variables
+# Copy these variables to your .env file or set them in your environment
+# NEVER commit .env files with real credentials to version control
+
+# Required: S3 location for Athena query results
+ATHENA_S3_OUTPUT_LOCATION=s3://your-bucket-name/athena-results/
+
+# AWS Credentials (optional if using AWS CLI profiles or IAM roles)
+# AWS_ACCESS_KEY_ID=your_access_key_here
+# AWS_SECRET_ACCESS_KEY=your_secret_key_here
+
+# AWS Configuration
+AWS_REGION=us-east-1
+AWS_DEFAULT_REGION=us-east-1
+
+# Athena Configuration
+ATHENA_WORKGROUP=primary
+ATHENA_TIMEOUT_SECONDS=60
+
+# OpenAI API Key (only needed for testing with OpenAI Agents SDK)
+# OPENAI_API_KEY=sk-proj-your_openai_api_key_here
+
+# Additional AWS Configuration (optional)
+# AWS_PROFILE=your_aws_profile_name
+# AWS_SESSION_TOKEN=your_session_token_if_using_temporary_credentials
+
+# Usage Instructions:
+# 1. Copy this file to .env in your project root
+# 2. Uncomment and fill in the required values
+# 3. Make sure .env is in your .gitignore file
+# 4. For production, use AWS IAM roles instead of access keys when possible 

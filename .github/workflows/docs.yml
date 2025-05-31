@@ -1,0 +1,166 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install markdown-it-py[linkify,plugins] linkchecker
+
+    - name: Validate Markdown syntax
+      run: |
+        python -c "
+        import markdown_it
+        import sys
+        from pathlib import Path
+        
+        md = markdown_it.MarkdownIt()
+        errors = []
+        
+        for md_file in Path('.').glob('*.md'):
+            try:
+                with open(md_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                md.parse(content)
+                print(f'✅ {md_file} - Valid Markdown')
+            except Exception as e:
+                errors.append(f'❌ {md_file} - {e}')
+                print(f'❌ {md_file} - {e}')
+        
+        if errors:
+            print(f'\nFound {len(errors)} Markdown errors')
+            sys.exit(1)
+        else:
+            print(f'\n✅ All Markdown files are valid')
+        "
+
+    - name: Check documentation completeness
+      run: |
+        python -c "
+        import sys
+        from pathlib import Path
+        
+        required_files = [
+            'README.md',
+            'LICENSE', 
+            'CHANGELOG.md',
+            'CONTRIBUTING.md',
+            'SECURITY.md'
+        ]
+        
+        missing = []
+        for file in required_files:
+            if not Path(file).exists():
+                missing.append(file)
+        
+        if missing:
+            print(f'❌ Missing required documentation files: {missing}')
+            sys.exit(1)
+        else:
+            print('✅ All required documentation files present')
+        "
+
+    - name: Validate links in documentation
+      run: |
+        # Check for broken internal links in README
+        python -c "
+        import re
+        from pathlib import Path
+        
+        readme_content = Path('README.md').read_text()
+        
+        # Find internal file links
+        internal_links = re.findall(r'\[.*?\]\(([^http][^)]+)\)', readme_content)
+        
+        broken_links = []
+        for link in internal_links:
+            # Remove anchors
+            file_path = link.split('#')[0]
+            if file_path and not Path(file_path).exists():
+                broken_links.append(link)
+        
+        if broken_links:
+            print(f'❌ Broken internal links found: {broken_links}')
+            exit(1)
+        else:
+            print('✅ All internal links are valid')
+        "
+
+    - name: Check code examples in README
+      run: |
+        python -c "
+        import re
+        from pathlib import Path
+        
+        readme_content = Path('README.md').read_text()
+        
+        # Find Python code blocks
+        python_blocks = re.findall(r'```python\n(.*?)\n```', readme_content, re.DOTALL)
+        bash_blocks = re.findall(r'```bash\n(.*?)\n```', readme_content, re.DOTALL)
+        
+        print(f'Found {len(python_blocks)} Python code examples')
+        print(f'Found {len(bash_blocks)} Bash code examples')
+        
+        # Basic validation - check for common issues
+        issues = []
+        for i, block in enumerate(python_blocks):
+            if 'import' in block and 'athena_mcp' in block:
+                if 'from athena_mcp' not in block and 'import athena_mcp' not in block:
+                    issues.append(f'Python block {i+1}: Possible import issue')
+        
+        if issues:
+            print(f'⚠️  Potential issues in code examples: {issues}')
+        else:
+            print('✅ Code examples look good')
+        "
+
+  check-pyproject:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Validate pyproject.toml
+      run: |
+        python -c "
+        import tomllib
+        from pathlib import Path
+        
+        try:
+            with open('pyproject.toml', 'rb') as f:
+                config = tomllib.load(f)
+            
+            # Check required fields
+            project = config.get('project', {})
+            required_fields = ['name', 'version', 'description', 'authors', 'license']
+            
+            missing = [field for field in required_fields if field not in project]
+            if missing:
+                print(f'❌ Missing required fields in pyproject.toml: {missing}')
+                exit(1)
+            
+            print('✅ pyproject.toml is valid and complete')
+            
+        except Exception as e:
+            print(f'❌ Error parsing pyproject.toml: {e}')
+            exit(1)
+        " 

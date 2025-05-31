@@ -14,7 +14,7 @@ Thank you for your interest in contributing to the AWS Athena MCP Server! This d
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/aws-athena-mcp.git
+   git clone https://github.com/ColeMurray/aws-athena-mcp.git
    cd aws-athena-mcp
    ```
 

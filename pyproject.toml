@@ -43,14 +43,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/aws-athena-mcp"
-Repository = "https://github.com/your-org/aws-athena-mcp"
-Issues = "https://github.com/your-org/aws-athena-mcp/issues"
-Documentation = "https://github.com/your-org/aws-athena-mcp#readme"
-Changelog = "https://github.com/your-org/aws-athena-mcp/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ColeMurray/aws-athena-mcp"
+Repository = "https://github.com/ColeMurray/aws-athena-mcp"
+Issues = "https://github.com/ColeMurray/aws-athena-mcp/issues"
+Documentation = "https://github.com/ColeMurray/aws-athena-mcp#readme"
+Changelog = "https://github.com/ColeMurray/aws-athena-mcp/blob/main/CHANGELOG.md"
 
 [project.scripts]
-athena-mcp-server = "athena_mcp.server:main"
+aws-athena-mcp = "athena_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

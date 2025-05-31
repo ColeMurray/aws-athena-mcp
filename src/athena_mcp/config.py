@@ -5,26 +5,26 @@ Handles environment variables with sensible defaults and clear validation.
 """
 
 import os
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class Config:
     """Configuration for AWS Athena MCP Server."""
-    
+
     # Required settings
     s3_output_location: str
     aws_region: str = "us-east-1"
-    
+
     # Optional settings
     athena_workgroup: Optional[str] = None
     timeout_seconds: int = 60
-    
+
     @classmethod
     def from_env(cls) -> "Config":
         """Create configuration from environment variables."""
-        
+
         # Required environment variables
         s3_output_location = os.getenv("ATHENA_S3_OUTPUT_LOCATION")
         if not s3_output_location:
@@ -32,18 +32,18 @@ class Config:
                 "ATHENA_S3_OUTPUT_LOCATION environment variable is required. "
                 "Example: export ATHENA_S3_OUTPUT_LOCATION=s3://my-bucket/results/"
             )
-        
+
         # Validate S3 path format
         if not s3_output_location.startswith("s3://"):
             raise ValueError(
                 f"ATHENA_S3_OUTPUT_LOCATION must be a valid S3 path starting with 's3://'. "
                 f"Got: {s3_output_location}"
             )
-        
+
         # Optional environment variables with defaults
         aws_region = os.getenv("AWS_REGION", "us-east-1")
         athena_workgroup = os.getenv("ATHENA_WORKGROUP")
-        
+
         # Parse timeout with validation
         timeout_str = os.getenv("ATHENA_TIMEOUT_SECONDS", "60")
         try:
@@ -56,19 +56,19 @@ class Config:
             raise ValueError(
                 f"ATHENA_TIMEOUT_SECONDS must be a positive integer. Got: {timeout_str}"
             ) from e
-        
+
         return cls(
             s3_output_location=s3_output_location,
             aws_region=aws_region,
             athena_workgroup=athena_workgroup,
-            timeout_seconds=timeout_seconds
+            timeout_seconds=timeout_seconds,
         )
-    
+
     def validate_aws_credentials(self) -> None:
         """Validate that AWS credentials are available."""
         import boto3
-        from botocore.exceptions import NoCredentialsError, ClientError
-        
+        from botocore.exceptions import ClientError, NoCredentialsError
+
         try:
             # Test credentials by creating a session and making a simple call
             session = boto3.Session(region_name=self.aws_region)
@@ -84,8 +84,10 @@ class Config:
             )
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
-            raise ValueError(f"AWS credentials are invalid or insufficient permissions: {error_code}")
-    
+            raise ValueError(
+                f"AWS credentials are invalid or insufficient permissions: {error_code}"
+            )
+
     def __str__(self) -> str:
         """String representation for logging (without sensitive data)."""
         return (
@@ -93,4 +95,4 @@ class Config:
             f"aws_region={self.aws_region}, "
             f"athena_workgroup={self.athena_workgroup}, "
             f"timeout_seconds={self.timeout_seconds})"
-        ) 
+        )
