@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented SQL injection prevention measures
 - Added security guidelines and best practices documentation
 
-## [1.0.0] - 2024-01-XX
+## [1.0.0] - 2025-05-31
 
 ### Added
 - Initial release of AWS Athena MCP Server
