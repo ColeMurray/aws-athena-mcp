@@ -5,7 +5,7 @@ Simple tools for executing queries and getting results.
 """
 
 import json
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from ..athena import AthenaClient, AthenaError
 from ..models import QueryRequest, QueryResult
