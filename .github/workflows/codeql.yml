@@ -66,12 +66,6 @@ jobs:
         category: "/language:${{matrix.language}}"
         upload: true
 
-    - name: Upload SARIF results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: ../results/python.sarif
-
   security-scan:
     name: Additional Security Scans
     runs-on: ubuntu-latest
