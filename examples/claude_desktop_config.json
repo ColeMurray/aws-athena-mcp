@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "aws-athena-mcp": {
+      "command": "uvx",
+      "args": [
+        "aws-athena-mcp"
+      ],
+      "env": {
+        "ATHENA_S3_OUTPUT_LOCATION": "s3://your-bucket/athena-results/",
+        "AWS_REGION": "us-east-1",
+        "ATHENA_WORKGROUP": "primary",
+        "ATHENA_TIMEOUT_SECONDS": "60"
+      }
+    }
+  }
+} 
