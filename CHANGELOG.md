@@ -23,6 +23,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented SQL injection prevention measures
 - Added security guidelines and best practices documentation
 
+## [1.0.1] - 2025-01-06
+
+### Fixed
+- Fixed incorrect uvx installation syntax in README documentation
+- Updated Claude Desktop configuration examples to use correct uvx syntax (`uvx aws-athena-mcp`)
+- Corrected installation instructions to use `uv tool install aws-athena-mcp` instead of non-existent `uvx install`
+
+### Changed
+- Pinned fastMCP dependency to version 2.5.2 to avoid linting errors from newer versions
+- Reordered Claude Desktop configuration options to prioritize uvx as the most common MCP pattern
+- Updated example configuration file to use correct uvx syntax
+
+### Documentation
+- Added three configuration options for Claude Desktop: uvx (recommended), installed tool, and uv tool run
+- Improved installation instructions with multiple methods
+- Enhanced troubleshooting section
+
 ## [1.0.0] - 2025-05-31
 
 ### Added
