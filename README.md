@@ -16,8 +16,8 @@ A simple, clean MCP (Model Context Protocol) server for AWS Athena integration. 
 ### 1. Install
 
 ```bash
-# From PyPI with uvx (recommended for Claude Desktop)
-uvx install aws-athena-mcp
+# From PyPI with uv (recommended for Claude Desktop)
+uv tool install aws-athena-mcp
 
 # From PyPI with pip
 pip install aws-athena-mcp
@@ -45,10 +45,16 @@ export ATHENA_TIMEOUT_SECONDS=60
 ### 3. Run
 
 ```bash
-# Start the MCP server
+# Start the MCP server (if installed with uv tool install)
 aws-athena-mcp
 
-# Or run directly
+# Or run directly with uv (without installing)
+uv tool run aws-athena-mcp
+
+# Or run directly with uvx (without installing)
+uvx aws-athena-mcp
+
+# Or run directly with Python
 python -m athena_mcp.server
 ```
 
@@ -68,7 +74,7 @@ Add the following configuration to your `claude_desktop_config.json`:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-**Configuration:**
+**Configuration (Option 1 - Using uvx - Recommended):**
 ```json
 {
   "mcpServers": {
@@ -87,6 +93,47 @@ Add the following configuration to your `claude_desktop_config.json`:
   }
 }
 ```
+
+**Configuration (Option 2 - Using installed tool):**
+```json
+{
+  "mcpServers": {
+    "aws-athena-mcp": {
+      "command": "aws-athena-mcp",
+      "env": {
+        "ATHENA_S3_OUTPUT_LOCATION": "s3://your-bucket/athena-results/",
+        "AWS_REGION": "us-east-1",
+        "ATHENA_WORKGROUP": "primary",
+        "ATHENA_TIMEOUT_SECONDS": "60"
+      }
+    }
+  }
+}
+```
+
+**Configuration (Option 3 - Using uv tool run):**
+```json
+{
+  "mcpServers": {
+    "aws-athena-mcp": {
+      "command": "uv",
+      "args": [
+        "tool",
+        "run",
+        "aws-athena-mcp"
+      ],
+      "env": {
+        "ATHENA_S3_OUTPUT_LOCATION": "s3://your-bucket/athena-results/",
+        "AWS_REGION": "us-east-1",
+        "ATHENA_WORKGROUP": "primary",
+        "ATHENA_TIMEOUT_SECONDS": "60"
+      }
+    }
+  }
+}
+```
+
+**Recommended approach:** Use Option 1 (uvx) for the most common MCP setup pattern. Option 2 (installed tool) offers better performance as it avoids package resolution on each startup.
 
 ### 3. Set AWS Credentials
 Configure your AWS credentials using one of these methods:
@@ -133,7 +180,7 @@ python scripts/setup_claude_desktop.py
 ```
 
 The script will:
-- Check if uvx is installed
+- Check if uv is installed
 - Guide you through configuration
 - Update your Claude Desktop config file
 - Verify AWS credentials
@@ -496,4 +543,4 @@ Contributions welcome! Please read our [contributing guidelines](CONTRIBUTING.md
 
 ---
 
-**Made with ❤️ for the MCP community** 
+**Made with ❤️ for the MCP community**
