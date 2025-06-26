@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Enhanced schema discovery tools with search functionality
+  - `list_tables` now supports optional `search` parameter for filtering table names
+  - Improved error handling with structured JSON responses for schema tools
 - Comprehensive test suite for configuration module
 - Type annotations throughout codebase
 - Security policy and vulnerability reporting process
@@ -15,8 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MIT license for open source distribution
 
 ### Changed
+- Updated API documentation to reflect current schema tools implementation
+- Enhanced data models documentation with `DatabaseInfo` and `TableInfo` structures
 - Improved error message consistency in configuration validation
 - Enhanced documentation with security best practices
+
+### Documentation
+- Updated API reference to include search parameter for `list_tables`
+- Added comprehensive data models documentation
+- Enhanced usage examples for schema discovery tools
+- Updated README with current tool capabilities
 
 ### Security
 - Added input validation for all query parameters

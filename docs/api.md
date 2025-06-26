@@ -66,18 +66,27 @@ Retrieve results for a completed query.
 
 ### `list_tables`
 
-List all tables in a specified database.
+List all tables in a specified database with optional search filtering.
 
 **Parameters:**
 - `database` (string, required): The Athena database name
+- `search` (string, optional): Optional search string to filter table names
 
 **Returns:**
-- JSON string containing an array of table names
+- JSON string containing a `DatabaseInfo` object with table information
 
 **Example:**
 ```json
 {
   "database": "default"
+}
+```
+
+**Example with search filter:**
+```json
+{
+  "database": "analytics",
+  "search": "user"
 }
 ```
 
@@ -90,7 +99,7 @@ Get detailed schema information for a specific table.
 - `table_name` (string, required): The name of the table to describe
 
 **Returns:**
-- JSON string containing table schema details including column names, types, and comments
+- JSON string containing a `TableInfo` object with detailed table schema
 
 **Example:**
 ```json
@@ -109,27 +118,68 @@ The `QueryResult` object returned by successful queries contains:
 ```json
 {
   "query_execution_id": "string",
-  "query": "string",
-  "database": "string",
-  "state": "string",
+  "columns": ["col1", "col2", "..."],
+  "rows": [
+    {"col1": "value1", "col2": "value2", "..."}
+  ],
+  "bytes_scanned": 0,
+  "execution_time_ms": 0
+}
+```
+
+### QueryStatus
+
+The `QueryStatus` object returned by status checks contains:
+
+```json
+{
+  "query_execution_id": "string",
+  "state": "QUEUED|RUNNING|SUCCEEDED|FAILED|CANCELLED",
   "state_change_reason": "string",
-  "submission_date_time": "datetime",
-  "completion_date_time": "datetime",
-  "data_scanned_in_bytes": "integer",
-  "execution_time_in_millis": "integer",
-  "result_configuration": {
-    "output_location": "string"
-  },
+  "bytes_scanned": 0,
+  "execution_time_ms": 0
+}
+```
+
+### DatabaseInfo
+
+The `DatabaseInfo` object returned by `list_tables` contains:
+
+```json
+{
+  "database": "string",
+  "tables": ["table1", "table2", "..."],
+  "table_count": 0
+}
+```
+
+### TableInfo
+
+The `TableInfo` object returned by `describe_table` contains:
+
+```json
+{
+  "database": "string",
+  "table_name": "string",
   "columns": [
     {
       "name": "string",
-      "type": "string"
+      "type": "string",
+      "comment": "string"
     }
-  ],
-  "rows": [
-    ["value1", "value2", "..."]
-  ],
-  "row_count": "integer"
+  ]
+}
+```
+
+### ErrorResponse
+
+Error responses follow this standard format:
+
+```json
+{
+  "error": "string",
+  "code": "string",
+  "query_execution_id": "string"
 }
 ```
 
@@ -141,8 +191,9 @@ All tools may return error messages in case of failures:
 - **AWS credential errors**: Invalid or insufficient AWS permissions
 - **Query errors**: SQL syntax errors or execution failures
 - **Timeout errors**: Queries that exceed the configured timeout
+- **Validation errors**: Invalid database or table names
 
-Error responses are returned as descriptive string messages explaining the issue and potential solutions.
+Error responses are returned as JSON objects with descriptive error messages and error codes.
 
 ## Rate Limits and Quotas
 
@@ -152,5 +203,6 @@ Be aware of AWS Athena service limits:
 - **Query timeout**: Configurable via `ATHENA_TIMEOUT_SECONDS` (default: 60 seconds)
 - **Result size**: Large result sets may be truncated based on `max_rows` parameter
 - **S3 permissions**: Ensure proper permissions for the output location
+- **Glue API limits**: Schema discovery tools use AWS Glue APIs which have their own rate limits
 
-For more information, see the [AWS Athena Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html) documentation. 
+For more information, see the [AWS Athena Service Quotas](https://docs.aws.amazon.com/athena/latest/ug/service-limits.html) and [AWS Glue Service Quotas](https://docs.aws.amazon.com/glue/latest/dg/service-limits.html) documentation. 

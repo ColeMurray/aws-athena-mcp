@@ -5,7 +5,7 @@ Simple tools for discovering database and table schemas.
 """
 
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from ..athena import AthenaClient, AthenaError
 
@@ -17,12 +17,13 @@ def register_schema_tools(mcp: "FastMCP", athena_client: AthenaClient) -> None:
     """Register schema-related MCP tools."""
 
     @mcp.tool()
-    async def list_tables(database: str) -> str:
+    async def list_tables(database: str, search: Optional[str] = None) -> str:
         """
         List all tables in the specified Athena database.
 
         Args:
             database: The Athena database to list tables from
+            search: Optional search string to filter tables
 
         Returns:
             JSON string with list of tables
@@ -31,7 +32,7 @@ def register_schema_tools(mcp: "FastMCP", athena_client: AthenaClient) -> None:
             if not database.strip():
                 raise ValueError("Database name cannot be empty")
 
-            database_info = await athena_client.list_tables(database)
+            database_info = await athena_client.list_tables(database, search)
             return json.dumps(database_info.dict(), indent=2)
 
         except AthenaError as e:

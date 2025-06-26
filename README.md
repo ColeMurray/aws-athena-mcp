@@ -357,8 +357,8 @@ The server provides these MCP tools:
 
 ### Schema Discovery
 
-- **`list_tables`** - List all tables in a database
-- **`describe_table`** - Get detailed table schema
+- **`list_tables`** - List all tables in a database (with optional search filtering)
+- **`describe_table`** - Get detailed table schema information
 
 ## 📖 Usage Examples
 
@@ -376,15 +376,21 @@ result = await mcp_client.call_tool("run_query", {
 ### Schema Discovery
 
 ```python
-# List tables
+# List all tables in a database
 tables = await mcp_client.call_tool("list_tables", {
     "database": "default"
 })
 
-# Describe a table
+# List tables with search filter
+user_tables = await mcp_client.call_tool("list_tables", {
+    "database": "default",
+    "search": "user"
+})
+
+# Describe a specific table
 schema = await mcp_client.call_tool("describe_table", {
     "database": "default",
-    "table_name": "my_table"
+    "table_name": "user_events"
 })
 ```
 
