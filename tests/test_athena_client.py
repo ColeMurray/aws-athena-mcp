@@ -356,7 +356,7 @@ class TestAthenaClient:
         # Mock AWS error
         mock_boto3_client.start_query_execution.side_effect = ClientError(
             {"Error": {"Code": "InvalidRequestException", "Message": "Database not found"}},
-            "start_query_execution"
+            "start_query_execution",
         )
 
         client = AthenaClient(config)
@@ -481,7 +481,7 @@ class TestAthenaClient:
         assert table_info.database == "analytics"
         assert table_info.table_name == "users"
         assert len(table_info.columns) == 4
-        
+
         # Check all columns
         column_names = [col["name"] for col in table_info.columns]
         assert "user_id" in column_names
@@ -544,7 +544,7 @@ class TestAthenaClient:
         # Mock AWS error
         mock_boto3_client.start_query_execution.side_effect = ClientError(
             {"Error": {"Code": "InvalidRequestException", "Message": "Table not found"}},
-            "start_query_execution"
+            "start_query_execution",
         )
 
         client = AthenaClient(config)

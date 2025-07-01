@@ -272,7 +272,9 @@ class AthenaClient:
         else:
             search_str = ""
 
-        request = QueryRequest(database=sanitized_database, query=f"SHOW TABLES {search_str}", max_rows=1000)
+        request = QueryRequest(
+            database=sanitized_database, query=f"SHOW TABLES {search_str}", max_rows=1000
+        )
 
         result = await self.execute_query(request)
 
