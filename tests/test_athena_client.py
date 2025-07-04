@@ -8,6 +8,7 @@ import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from botocore.exceptions import ClientError
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -253,6 +254,117 @@ class TestAthenaClient:
         assert "table2" in database_info.tables
 
     @pytest.mark.asyncio
+    async def test_list_tables_with_search(self, config, mock_boto3_client):
+        """Test listing tables with search filter."""
+        # Mock the SHOW TABLES LIKE query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+        }
+
+        mock_boto3_client.get_query_results.return_value = {
+            "ResultSet": {
+                "ResultSetMetadata": {"ColumnInfo": [{"Name": "tab_name"}]},
+                "Rows": [
+                    {"Data": [{"VarCharValue": "tab_name"}]},  # Header
+                    {"Data": [{"VarCharValue": "user_events"}]},
+                    {"Data": [{"VarCharValue": "user_profiles"}]},
+                ],
+            }
+        }
+
+        client = AthenaClient(config)
+        database_info = await client.list_tables("test_db", search="user")
+
+        assert database_info.database == "test_db"
+        assert database_info.table_count == 2
+        assert "user_events" in database_info.tables
+        assert "user_profiles" in database_info.tables
+        assert "table1" not in database_info.tables
+
+    @pytest.mark.asyncio
+    async def test_list_tables_empty_database(self, config, mock_boto3_client):
+        """Test listing tables in an empty database."""
+        # Mock the SHOW TABLES query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+        }
+
+        mock_boto3_client.get_query_results.return_value = {
+            "ResultSet": {
+                "ResultSetMetadata": {"ColumnInfo": [{"Name": "tab_name"}]},
+                "Rows": [
+                    {"Data": [{"VarCharValue": "tab_name"}]},  # Header only
+                ],
+            }
+        }
+
+        client = AthenaClient(config)
+        database_info = await client.list_tables("empty_db")
+
+        assert database_info.database == "empty_db"
+        assert database_info.table_count == 0
+        assert database_info.tables == []
+
+    @pytest.mark.asyncio
+    async def test_list_tables_timeout(self, config, mock_boto3_client):
+        """Test list_tables with timeout."""
+        # Mock the SHOW TABLES query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        # Always return RUNNING state to simulate timeout
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "RUNNING"}, "Statistics": {}}
+        }
+
+        # Use a very short timeout to speed up the test
+        config.timeout_seconds = 1
+
+        client = AthenaClient(config)
+
+        # Mock asyncio.sleep to speed up the test
+        with patch("asyncio.sleep", return_value=None):
+            with pytest.raises(AthenaError, match="SHOW TABLES query timed out"):
+                await client.list_tables("test_db")
+
+    @pytest.mark.asyncio
+    async def test_list_tables_invalid_database(self, config, mock_boto3_client):
+        """Test list_tables with invalid database name."""
+        client = AthenaClient(config)
+
+        with pytest.raises(ValueError, match="Identifier cannot be empty"):
+            await client.list_tables("")
+
+        with pytest.raises(ValueError, match="Identifier cannot be empty"):
+            await client.list_tables("   ")
+
+        with pytest.raises(ValueError, match="only invalid characters"):
+            await client.list_tables("@#$%")
+
+    @pytest.mark.asyncio
+    async def test_list_tables_aws_error(self, config, mock_boto3_client):
+        """Test list_tables with AWS error."""
+        # Mock AWS error
+        mock_boto3_client.start_query_execution.side_effect = ClientError(
+            {"Error": {"Code": "InvalidRequestException", "Message": "Database not found"}},
+            "start_query_execution"
+        )
+
+        client = AthenaClient(config)
+
+        with pytest.raises(AthenaError, match="Database not found"):
+            await client.list_tables("nonexistent_db")
+
+    @pytest.mark.asyncio
     async def test_describe_table(self, config, mock_boto3_client):
         """Test describing a table schema."""
         # Mock the DESCRIBE query execution
@@ -305,3 +417,207 @@ class TestAthenaClient:
         assert table_info.columns[0]["type"] == "bigint"
         assert table_info.columns[1]["name"] == "name"
         assert table_info.columns[1]["type"] == "string"
+
+    @pytest.mark.asyncio
+    async def test_describe_table_complex_schema(self, config, mock_boto3_client):
+        """Test describing a table with complex schema."""
+        # Mock the DESCRIBE query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+        }
+
+        mock_boto3_client.get_query_results.return_value = {
+            "ResultSet": {
+                "ResultSetMetadata": {
+                    "ColumnInfo": [{"Name": "col_name"}, {"Name": "data_type"}, {"Name": "comment"}]
+                },
+                "Rows": [
+                    {
+                        "Data": [
+                            {"VarCharValue": "col_name"},
+                            {"VarCharValue": "data_type"},
+                            {"VarCharValue": "comment"},
+                        ]
+                    },  # Header
+                    {
+                        "Data": [
+                            {"VarCharValue": "user_id"},
+                            {"VarCharValue": "bigint"},
+                            {"VarCharValue": "Unique user identifier"},
+                        ]
+                    },
+                    {
+                        "Data": [
+                            {"VarCharValue": "email"},
+                            {"VarCharValue": "varchar(255)"},
+                            {"VarCharValue": "User email address"},
+                        ]
+                    },
+                    {
+                        "Data": [
+                            {"VarCharValue": "created_at"},
+                            {"VarCharValue": "timestamp"},
+                            {"VarCharValue": "Account creation timestamp"},
+                        ]
+                    },
+                    {
+                        "Data": [
+                            {"VarCharValue": "is_active"},
+                            {"VarCharValue": "boolean"},
+                            {"VarCharValue": "Account status flag"},
+                        ]
+                    },
+                ],
+            }
+        }
+
+        client = AthenaClient(config)
+        table_info = await client.describe_table("analytics", "users")
+
+        assert table_info.database == "analytics"
+        assert table_info.table_name == "users"
+        assert len(table_info.columns) == 4
+        
+        # Check all columns
+        column_names = [col["name"] for col in table_info.columns]
+        assert "user_id" in column_names
+        assert "email" in column_names
+        assert "created_at" in column_names
+        assert "is_active" in column_names
+
+        # Check specific column details
+        email_col = next(col for col in table_info.columns if col["name"] == "email")
+        assert email_col["type"] == "varchar(255)"
+        assert email_col["comment"] == "User email address"
+
+    @pytest.mark.asyncio
+    async def test_describe_table_timeout(self, config, mock_boto3_client):
+        """Test describe_table with timeout."""
+        # Mock the DESCRIBE query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        # Always return RUNNING state to simulate timeout
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "RUNNING"}, "Statistics": {}}
+        }
+
+        # Use a very short timeout to speed up the test
+        config.timeout_seconds = 1
+
+        client = AthenaClient(config)
+
+        # Mock asyncio.sleep to speed up the test
+        with patch("asyncio.sleep", return_value=None):
+            with pytest.raises(AthenaError, match="DESCRIBE test_table query timed out"):
+                await client.describe_table("test_db", "test_table")
+
+    @pytest.mark.asyncio
+    async def test_describe_table_invalid_parameters(self, config, mock_boto3_client):
+        """Test describe_table with invalid parameters."""
+        client = AthenaClient(config)
+
+        # Test empty database name
+        with pytest.raises(ValueError, match="Identifier cannot be empty"):
+            await client.describe_table("", "test_table")
+
+        # Test empty table name
+        with pytest.raises(ValueError, match="Identifier cannot be empty"):
+            await client.describe_table("test_db", "")
+
+        # Test invalid database name
+        with pytest.raises(ValueError, match="only invalid characters"):
+            await client.describe_table("@#$%", "test_table")
+
+        # Test invalid table name
+        with pytest.raises(ValueError, match="only invalid characters"):
+            await client.describe_table("test_db", "@#$%")
+
+    @pytest.mark.asyncio
+    async def test_describe_table_aws_error(self, config, mock_boto3_client):
+        """Test describe_table with AWS error."""
+        # Mock AWS error
+        mock_boto3_client.start_query_execution.side_effect = ClientError(
+            {"Error": {"Code": "InvalidRequestException", "Message": "Table not found"}},
+            "start_query_execution"
+        )
+
+        client = AthenaClient(config)
+
+        with pytest.raises(AthenaError, match="Table not found"):
+            await client.describe_table("test_db", "nonexistent_table")
+
+    @pytest.mark.asyncio
+    async def test_describe_table_empty_schema(self, config, mock_boto3_client):
+        """Test describing a table with no columns."""
+        # Mock the DESCRIBE query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+        }
+
+        mock_boto3_client.get_query_results.return_value = {
+            "ResultSet": {
+                "ResultSetMetadata": {
+                    "ColumnInfo": [{"Name": "col_name"}, {"Name": "data_type"}, {"Name": "comment"}]
+                },
+                "Rows": [
+                    {
+                        "Data": [
+                            {"VarCharValue": "col_name"},
+                            {"VarCharValue": "data_type"},
+                            {"VarCharValue": "comment"},
+                        ]
+                    },  # Header only
+                ],
+            }
+        }
+
+        client = AthenaClient(config)
+        table_info = await client.describe_table("test_db", "empty_table")
+
+        assert table_info.database == "test_db"
+        assert table_info.table_name == "empty_table"
+        assert len(table_info.columns) == 0
+        assert table_info.columns == []
+
+    @pytest.mark.asyncio
+    async def test_schema_tools_sanitization(self, config, mock_boto3_client):
+        """Test that schema tools properly sanitize identifiers."""
+        # Mock successful query execution
+        mock_boto3_client.start_query_execution.return_value = {
+            "QueryExecutionId": "test-execution-id"
+        }
+
+        mock_boto3_client.get_query_execution.return_value = {
+            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+        }
+
+        mock_boto3_client.get_query_results.return_value = {
+            "ResultSet": {
+                "ResultSetMetadata": {"ColumnInfo": [{"Name": "tab_name"}]},
+                "Rows": [
+                    {"Data": [{"VarCharValue": "tab_name"}]},  # Header
+                    {"Data": [{"VarCharValue": "clean_table"}]},
+                ],
+            }
+        }
+
+        client = AthenaClient(config)
+
+        # Test list_tables with sanitization
+        database_info = await client.list_tables("  test@#$%db  ")
+        assert database_info.database == "testdb"  # Sanitized
+
+        # Test describe_table with sanitization
+        table_info = await client.describe_table("  test@#$%db  ", "  table@#$%name  ")
+        assert table_info.database == "testdb"  # Sanitized
+        assert table_info.table_name == "tablename"  # Sanitized

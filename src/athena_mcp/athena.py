@@ -261,13 +261,18 @@ class AthenaClient:
             logger.error(f"Error getting query results: {error_code} - {str(e)}")
             raise AthenaError(str(e), error_code, query_execution_id)
 
-    async def list_tables(self, database: str) -> DatabaseInfo:
+    async def list_tables(self, database: str, search: Optional[str] = None) -> DatabaseInfo:
         """List all tables in a database."""
         logger.info(f"Listing tables in database: {database}")
 
         sanitized_database = QueryValidator.sanitize_identifier(database)
 
-        request = QueryRequest(database=sanitized_database, query="SHOW TABLES", max_rows=1000)
+        if search:
+            search_str = f"LIKE '*{search.lower()}*'"
+        else:
+            search_str = ""
+
+        request = QueryRequest(database=sanitized_database, query=f"SHOW TABLES {search_str}", max_rows=1000)
 
         result = await self.execute_query(request)
 
