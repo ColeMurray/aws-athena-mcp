@@ -232,9 +232,17 @@ class AthenaClient:
             column_info = result_set.get("ResultSetMetadata", {}).get("ColumnInfo", [])
             columns = [col.get("Name", "") for col in column_info]
 
-            # Extract rows (skip header for SELECT queries)
+            # Extract rows, skipping the header row only when present.
+            # SELECT queries include the column names as the first row;
+            # SHOW/DESCRIBE queries do not.
             rows_data = result_set.get("Rows", [])
-            start_index = 1 if len(rows_data) > 0 and columns else 0
+            start_index = 0
+            if rows_data and columns:
+                first_row_values = [
+                    d.get("VarCharValue", "") for d in rows_data[0].get("Data", [])
+                ]
+                if first_row_values == columns:
+                    start_index = 1
 
             rows = []
             for row_data in rows_data[start_index:]:
