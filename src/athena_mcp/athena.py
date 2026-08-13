@@ -184,6 +184,7 @@ class AthenaClient:
             query_status = QueryStatus(
                 query_execution_id=query_execution_id,
                 state=QueryState(status.get("State", "UNKNOWN")),
+                statement_type=execution.get("StatementType"),
                 state_change_reason=status.get("StateChangeReason"),
                 bytes_scanned=statistics.get("DataScannedInBytes", 0),
                 execution_time_ms=statistics.get("EngineExecutionTimeInMillis", 0),
@@ -232,9 +233,9 @@ class AthenaClient:
             column_info = result_set.get("ResultSetMetadata", {}).get("ColumnInfo", [])
             columns = [col.get("Name", "") for col in column_info]
 
-            # Extract rows (skip header for SELECT queries)
+            # DML results include a header row; utility results start with data.
             rows_data = result_set.get("Rows", [])
-            start_index = 1 if len(rows_data) > 0 and columns else 0
+            start_index = 1 if rows_data and columns and status.statement_type == "DML" else 0
 
             rows = []
             for row_data in rows_data[start_index:]:

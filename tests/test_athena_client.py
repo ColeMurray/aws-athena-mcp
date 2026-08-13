@@ -134,6 +134,7 @@ class TestAthenaClient:
 
         mock_boto3_client.get_query_execution.return_value = {
             "QueryExecution": {
+                "StatementType": "DML",
                 "Status": {"State": "SUCCEEDED"},
                 "Statistics": {"DataScannedInBytes": 1024, "EngineExecutionTimeInMillis": 5000},
             }
@@ -205,6 +206,7 @@ class TestAthenaClient:
         """Test getting query status."""
         mock_boto3_client.get_query_execution.return_value = {
             "QueryExecution": {
+                "StatementType": "DML",
                 "Status": {
                     "State": "SUCCEEDED",
                     "StateChangeReason": "Query completed successfully",
@@ -218,6 +220,7 @@ class TestAthenaClient:
 
         assert status.query_execution_id == "test-execution-id"
         assert status.state == QueryState.SUCCEEDED
+        assert status.statement_type == "DML"
         assert status.bytes_scanned == 2048
         assert status.execution_time_ms == 3000
 
@@ -230,14 +233,17 @@ class TestAthenaClient:
         }
 
         mock_boto3_client.get_query_execution.return_value = {
-            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+            "QueryExecution": {
+                "StatementType": "UTILITY",
+                "Status": {"State": "SUCCEEDED"},
+                "Statistics": {},
+            }
         }
 
         mock_boto3_client.get_query_results.return_value = {
             "ResultSet": {
                 "ResultSetMetadata": {"ColumnInfo": [{"Name": "tab_name"}]},
                 "Rows": [
-                    {"Data": [{"VarCharValue": "tab_name"}]},  # Header
                     {"Data": [{"VarCharValue": "table1"}]},
                     {"Data": [{"VarCharValue": "table2"}]},
                 ],
@@ -249,8 +255,7 @@ class TestAthenaClient:
 
         assert database_info.database == "test_db"
         assert database_info.table_count == 2
-        assert "table1" in database_info.tables
-        assert "table2" in database_info.tables
+        assert database_info.tables == ["table1", "table2"]
 
     @pytest.mark.asyncio
     async def test_describe_table(self, config, mock_boto3_client):
@@ -261,7 +266,11 @@ class TestAthenaClient:
         }
 
         mock_boto3_client.get_query_execution.return_value = {
-            "QueryExecution": {"Status": {"State": "SUCCEEDED"}, "Statistics": {}}
+            "QueryExecution": {
+                "StatementType": "UTILITY",
+                "Status": {"State": "SUCCEEDED"},
+                "Statistics": {},
+            }
         }
 
         mock_boto3_client.get_query_results.return_value = {
@@ -270,13 +279,6 @@ class TestAthenaClient:
                     "ColumnInfo": [{"Name": "col_name"}, {"Name": "data_type"}, {"Name": "comment"}]
                 },
                 "Rows": [
-                    {
-                        "Data": [
-                            {"VarCharValue": "col_name"},
-                            {"VarCharValue": "data_type"},
-                            {"VarCharValue": "comment"},
-                        ]
-                    },  # Header
                     {
                         "Data": [
                             {"VarCharValue": "id"},

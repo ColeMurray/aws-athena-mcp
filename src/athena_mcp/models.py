@@ -43,6 +43,7 @@ class QueryStatus(BaseModel):
 
     query_execution_id: str
     state: QueryState
+    statement_type: Optional[str] = None
     state_change_reason: Optional[str] = None
     bytes_scanned: int = 0
     execution_time_ms: int = 0
